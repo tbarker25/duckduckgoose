@@ -1,0 +1,56 @@
+syntax = "proto3";
+package duckduckgoose.v1;
+option go_package = "github.com/tbarker25/gen/go/duckduckgoose/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service DuckDuckGoose {
+    rpc GetRole(google.protobuf.Empty) returns (google.protobuf.StringValue) {
+        option (google.api.http) = {
+            get: "/v1/get-role"
+        };
+    };
+
+    rpc GetNode(GetNodeRequest) returns (Node) {
+        option (google.api.http) = {
+            get: "/v1/{name=nodes/*}"
+          };
+
+    };
+
+    rpc ListNodes(google.protobuf.Empty) returns (ListNodesResponse) {
+        option (google.api.http) = {
+            get: "/v1/nodes"
+          };
+
+    };
+
+    rpc DeleteNode(DeleteNodeRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/{name=nodes/*}"
+        };
+    };
+}
+
+message GetNodeRequest {
+    string name = 1;
+}
+
+message ListNodesResponse {
+    repeated Node nodes = 1;
+}
+
+message DeleteNodeRequest {
+    string name = 1;
+};
+
+message Node {
+    uint64 id = 1;
+    string address = 2;
+    google.protobuf.Timestamp active_since = 3;
+    bool is_active = 4;
+    string role = 5;
+}
