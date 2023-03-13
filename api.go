@@ -19,7 +19,8 @@ type server struct {
 }
 
 func (s *server) GetRole(ctx context.Context, in *emptypb.Empty) (*wrapperspb.StringValue, error) {
-	if node.Whoami() == node.Leader() {
+	whoami := node.Whoami()
+	if whoami > 0 && whoami == node.Leader() {
 		return &wrapperspb.StringValue{Value: "Goose"}, nil
 	}
 

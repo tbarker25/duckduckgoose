@@ -30,15 +30,23 @@ var (
 )
 
 var (
-	node *raft.Node
+	node       *raft.Node
+	raftServer *grpc.Server
 )
 
+func init() {
+	raftgrpc.Register(
+		raftgrpc.WithDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())))
+	raftServer = grpc.NewServer()
+}
+
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 	validateFlags()
 
-	startRaftNode()
 	startRaftGrpcServer()
+	startRaftNode()
 	startApi()
 }
 
@@ -79,6 +87,7 @@ func startRaftNode() {
 	}
 
 	node = raft.NewNode(noopStateMachine{}, transport.GRPC, opts...)
+	raftgrpc.RegisterHandler(raftServer, node.Handler())
 
 	go func() {
 		err := node.Start(startOpts...)
@@ -89,11 +98,6 @@ func startRaftNode() {
 }
 
 func startRaftGrpcServer() {
-	raftgrpc.Register(
-		raftgrpc.WithDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())))
-	raftServer := grpc.NewServer()
-	raftgrpc.RegisterHandler(raftServer, node.Handler())
-
 	go func() {
 		lis, err := net.Listen("tcp", *raftAddrFlag)
 		if err != nil {
@@ -136,6 +140,7 @@ func startApi() {
 	}
 }
 
+// We don't need any additional state to be tracked by Raft
 type noopStateMachine struct{}
 
 func (noopStateMachine) Apply(data []byte) {}
